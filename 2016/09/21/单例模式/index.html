@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  
+  <title>单例模式浅析 | XuYanjun</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+  <meta name="description" content="简介这周继续写《Android源码设计模式解析与实战》读书笔记。本书的第二章介绍了单例模式的各种实现方式，以及在 Android 源码中的应用。
+单例模式介绍确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。它的作用是避免产生多个对象消耗过多的资源，或者某种类型的对象只应该有且只有一个。比如创建一个对象需要消耗的资源过多，如要访问 IO 和数据库等资源。
+单例模式使用要点单例模式">
+<meta property="og:type" content="article">
+<meta property="og:title" content="单例模式浅析">
+<meta property="og:url" content="http://yoursite.com/2016/09/21/单例模式/index.html">
+<meta property="og:site_name" content="XuYanjun">
+<meta property="og:description" content="简介这周继续写《Android源码设计模式解析与实战》读书笔记。本书的第二章介绍了单例模式的各种实现方式，以及在 Android 源码中的应用。
+单例模式介绍确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。它的作用是避免产生多个对象消耗过多的资源，或者某种类型的对象只应该有且只有一个。比如创建一个对象需要消耗的资源过多，如要访问 IO 和数据库等资源。
+单例模式使用要点单例模式">
+<meta property="og:image" content="http://i.imgur.com/BO1J9Ma.png">
+<meta property="og:updated_time" content="2016-09-21T11:08:46.065Z">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="单例模式浅析">
+<meta name="twitter:description" content="简介这周继续写《Android源码设计模式解析与实战》读书笔记。本书的第二章介绍了单例模式的各种实现方式，以及在 Android 源码中的应用。
+单例模式介绍确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。它的作用是避免产生多个对象消耗过多的资源，或者某种类型的对象只应该有且只有一个。比如创建一个对象需要消耗的资源过多，如要访问 IO 和数据库等资源。
+单例模式使用要点单例模式">
+<meta name="twitter:image" content="http://i.imgur.com/BO1J9Ma.png">
+  
+    <link rel="alternative" href="/atom.xml" title="XuYanjun" type="application/atom+xml">
+  
+  
+    <link rel="icon" href="/img/favicon.png">
+  
+  
+  <link rel="stylesheet" href="//cdn.bootcss.com/animate.css/3.5.0/animate.min.css">
+  
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/font-awesome/css/font-awesome.min.css">
+  <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+  
+  
+      <link rel="stylesheet" href="/fancybox/jquery.fancybox.css">
+  
+  <!-- 加载特效 -->
+    <script src="/js/pace.js"></script>
+    <link href="/css/pace/pace-theme-flash.css" rel="stylesheet" />
+  <script>
+      var yiliaConfig = {
+          fancybox: true,
+          animate: true,
+          isHome: false,
+          isPost: true,
+          isArchive: false,
+          isTag: false,
+          isCategory: false,
+          open_in_new: false
+      }
+  </script>
+</head>
+<body>
+  <div id="container">
+    <div class="left-col">
+    <div class="overlay"></div>
+<div class="intrude-less">
+    <header id="header" class="inner">
+        <a href="/" class="profilepic">
+            
+            <img lazy-src="/img/head.jpg" class="js-avatar">
+            
+        </a>
+
+        <hgroup>
+          <h1 class="header-author"><a href="/">Yanjun Xu</a></h1>
+        </hgroup>
+
+        
+        <p class="header-subtitle">生命不息，战斗不止!</p>
+        
+        
+        
+            <div id="switch-btn" class="switch-btn">
+                <div class="icon">
+                    <div class="icon-ctn">
+                        <div class="icon-wrap icon-house" data-idx="0">
+                            <div class="birdhouse"></div>
+                            <div class="birdhouse_holes"></div>
+                        </div>
+                        <div class="icon-wrap icon-ribbon hide" data-idx="1">
+                            <div class="ribbon"></div>
+                        </div>
+                        
+                        <div class="icon-wrap icon-link hide" data-idx="2">
+                            <div class="loopback_l"></div>
+                            <div class="loopback_r"></div>
+                        </div>
+                        
+                        
+                        <div class="icon-wrap icon-me hide" data-idx="3">
+                            <div class="user"></div>
+                            <div class="shoulder"></div>
+                        </div>
+                        
+                    </div>
+                    
+                </div>
+                <div class="tips-box hide">
+                    <div class="tips-arrow"></div>
+                    <ul class="tips-inner">
+                        <li>菜单</li>
+                        <li>标签</li>
+                        
+                        <li>友情链接</li>
+                        
+                        
+                        <li>关于我</li>
+                        
+                    </ul>
+                </div>
+            </div>
+        
+
+        <div id="switch-area" class="switch-area">
+            <div class="switch-wrap">
+                <section class="switch-part switch-part1">
+                    <nav class="header-menu">
+                        <ul>
+                        
+                            <li><a href="/Home">博客首页</a></li>
+                        
+                            <li><a href="/works">作品展示</a></li>
+                        
+                            <li><a href="/about">留言打卡</a></li>
+                        
+                            <li><a href="/FrontEndGuide">安卓导航</a></li>
+                        
+                        </ul>
+                    </nav>
+                    <nav class="header-nav">
+                        <ul class="social">
+                            
+                                <a class="fl mail" target="_blank" href="mailto:reign9201@163.com" title="mail">mail</a>
+                            
+                                <a class="fl github" target="_blank" href="https://github.com/Reign9201" title="github">github</a>
+                            
+                                <a class="fl zhihu" target="_blank" href="https://www.zhihu.com/people/xu-yan-jun-24" title="zhihu">zhihu</a>
+                            
+                                <a class="fl weibo" target="_blank" href="http://weibo.com/xuyanjun9201" title="weibo">weibo</a>
+                            
+                        </ul>
+                    </nav>
+                </section>
+                
+                
+                <section class="switch-part switch-part2">
+                    <div class="widget tagcloud" id="js-tagcloud">
+                        
+                    </div>
+                </section>
+                
+                
+                
+                <section class="switch-part switch-part3">
+                    <div id="js-friends">
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://MOxFIVE.github.io/">MOxFIVE</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.vsay.cn/">DoubleV</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.ccwebsite.com/">兮兮</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://blog.dandyweng.com/">翁天信</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.plqblog.com/views/index.php">潘利强</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://www.hankin.cn/">hankin</a>
+                    
+                      <a target="_blank" class="main-nav-link switch-friends-link" href="http://blog.waydrow.com/">waydrow</a>
+                    
+                    </div>
+                </section>
+                
+
+                
+                
+                <section class="switch-part switch-part4">
+                
+                    <div id="js-aboutme">纯海迷、爱运动、爱交友、爱旅行、喜欢接触新鲜事物、迎接新的挑战，更爱游离于错综复杂的编码与逻辑中</div>
+                </section>
+                
+            </div>
+        </div>
+    </header>                
+</div>
+    </div>
+    <div class="mid-col">
+      <nav id="mobile-nav">
+      <div class="overlay">
+          <div class="slider-trigger"></div>
+          <h1 class="header-author js-mobile-header hide"><a href="/" title="回到主页">Yanjun Xu</a></h1>
+      </div>
+    <div class="intrude-less">
+        <header id="header" class="inner">
+            <a href="/" class="profilepic">
+                
+                    <img lazy-src="/img/head.jpg" class="js-avatar">
+                
+            </a>
+            <hgroup>
+              <h1 class="header-author"><a href="/" title="回到主页">Yanjun Xu</a></h1>
+            </hgroup>
+            
+            <p class="header-subtitle">生命不息，战斗不止!</p>
+            
+            <nav class="header-menu">
+                <ul>
+                
+                    <li><a href="/Home">博客首页</a></li>
+                
+                    <li><a href="/works">作品展示</a></li>
+                
+                    <li><a href="/about">留言打卡</a></li>
+                
+                    <li><a href="/FrontEndGuide">安卓导航</a></li>
+                
+                <div class="clearfix"></div>
+                </ul>
+            </nav>
+            <nav class="header-nav">
+                <div class="social">
+                    
+                        <a class="mail" target="_blank" href="mailto:reign9201@163.com" title="mail">mail</a>
+                    
+                        <a class="github" target="_blank" href="https://github.com/Reign9201" title="github">github</a>
+                    
+                        <a class="zhihu" target="_blank" href="https://www.zhihu.com/people/xu-yan-jun-24" title="zhihu">zhihu</a>
+                    
+                        <a class="weibo" target="_blank" href="http://weibo.com/xuyanjun9201" title="weibo">weibo</a>
+                    
+                </div>
+            </nav>
+        </header>                
+    </div>
+</nav>
+      <div class="body-wrap"><article id="post-单例模式" class="article article-type-post" itemscope itemprop="blogPost">
+  
+    <div class="article-meta">
+      <a href="/2016/09/21/单例模式/" class="article-date">
+      <time datetime="2016-09-21T10:32:56.481Z" itemprop="datePublished">2016-09-21</time>
+</a>
+    </div>
+  
+  <div class="article-inner">
+    
+      <input type="hidden" class="isFancy" />
+    
+    
+      <header class="article-header">
+        
+  
+    <h1 class="article-title" itemprop="name">
+      单例模式浅析
+    </h1>
+  
+
+      </header>
+      
+      <div class="article-info article-info-post">
+        
+
+        
+        <div class="clearfix"></div>
+      </div>
+      
+    
+    <div class="article-entry" itemprop="articleBody">
+      
+          
+        <h1 id="简介"><a href="#简介" class="headerlink" title="简介"></a>简介</h1><p>这周继续写《Android源码设计模式解析与实战》读书笔记。本书的第二章介绍了单例模式的各种实现方式，以及在 Android 源码中的应用。</p>
+<h1 id="单例模式介绍"><a href="#单例模式介绍" class="headerlink" title="单例模式介绍"></a>单例模式介绍</h1><p>确保某一个类只有一个实例，而且自行实例化并向整个系统提供这个实例。它的作用是避免产生多个对象消耗过多的资源，或者某种类型的对象只应该有且只有一个。比如创建一个对象需要消耗的资源过多，如要访问 IO 和数据库等资源。</p>
+<h1 id="单例模式使用要点"><a href="#单例模式使用要点" class="headerlink" title="单例模式使用要点"></a>单例模式使用要点</h1><p>单例模式 UML 类图如下：</p>
+<p><img src="http://i.imgur.com/BO1J9Ma.png" alt="单例模式 UML 类图"></p>
+<p>实现单例模式主要有如下几个关键点：</p>
+<p>1.构造函数不对外开放，一般为 Private；</p>
+<p>2.通过一个静态方法或者枚举返回单例对象；</p>
+<p>3.确保单例类的对象只有一个，尤其是在多线程环境下（难点）；</p>
+<p>4.确保单例类对象在反序列化时不会重新构建对象。</p>
+<h1 id="单例模式用法"><a href="#单例模式用法" class="headerlink" title="单例模式用法"></a>单例模式用法</h1><h2 id="饿汉模式"><a href="#饿汉模式" class="headerlink" title="饿汉模式"></a>饿汉模式</h2><pre><code>public class Singleton {  
+     private static Singleton instance = new Singleton();  
+     private Singleton (){
+     }
+     public static Singleton getInstance() {  
+     return instance;  
+     }  
+ }  
+</code></pre><p>饿汉模式在装载类时就创建对象实例，是典型的空间换时间。</p>
+<h2 id="懒汉模式"><a href="#懒汉模式" class="headerlink" title="懒汉模式"></a>懒汉模式</h2><pre><code>public class Singleton {
+    private static Singleton instance;
+    private Singleton(){};
+
+    public static synchronized Singleton getInstance(){
+        if(instance==null){
+            instance=new Singleton();
+        }
+        return instance;
+    }
+}
+</code></pre><p>懒汉模式在每次获取实例时都会进行判断，是典型的时间换空间。 getInstance() 方法中添加了 synchronized关键字，也就是上面所说的在多线程情况下保证单例对象唯一性的手段。但是即使 instance 已经被初始化，每次调用 getInstance() 方法都会进行同步，浪费不必要的资源，这也就是懒汉模式的最大问题。因此这种模式一般不建议使用。</p>
+<h2 id="双重检查锁定（Double-Check-Lock）实现单例"><a href="#双重检查锁定（Double-Check-Lock）实现单例" class="headerlink" title="双重检查锁定（Double Check Lock）实现单例"></a>双重检查锁定（Double Check Lock）实现单例</h2><pre><code>public class DCLSingleton {
+    // JDK1.5后的版本才可使用volatile关键字，保证sInstance对象每次都从主内存中读取
+    private volatile static DCLSingleton sInstance = null;
+
+    private DCLSingleton() {
+    }
+
+    public static DCLSingleton getInstance(){
+        if(sInstance==null){
+            synchronized(DCLSingleton.class){
+                if(sInstance==null){
+                    sInstance=new DCLSingleton();
+                }
+            }
+        }
+        return sInstance;
+    }
+}
+</code></pre><p>这个写法的特别之处在于对 instance 进行了两次判空：第一层主要是为了避免不必要的同步，第二层则是为了在 null 的情况下创建实例。<br>我们会发现上面代码有一个volatile关键字，因为在这里会有DCL失效问题。</p>
+<p>DCL 失效问题：假设线程 A 执行到sInstance=new DCLSingleton()语句，这看上去像是一句代码，实际上它并不是一个原子操作，这句代码最终会被编译为多条汇编指令，它大致做了三件事：</p>
+<p>1.给 sInstance 的实例分配内存；</p>
+<p>2.调用 DCLSingleton 的构造函数，初始化成员字段；</p>
+<p>3.将 sInstance 对象指向分配的内存空间（此时 sInstance 就不是 null了）。</p>
+<p>但是由于 Java 编译器允许处理器乱序执行。因此执行顺序可能是 1-2-3 也可能是 1-3-2，如果是后者，并且在 3 执行完毕、2 未执行之前被切换到 B 线程上，这时的 sInstance 因为已经在线程 A 内执行过了第三点，sInstance 已经是非空了，所以线程 B 直接取走 sInstance，再使用就会出错，这就是 DCL 失效问题。</p>
+<p>JDK 1.5 之后的版本具体化了 volatile 关键字，用它可以保证 sInstance 对象每次都从主内存中读取，虽然会影响性能，这种方式第一次加载时会稍慢，在高并发环境会有缺陷，但是一般能够满足需求。</p>
+<h2 id="静态内部类单例模式"><a href="#静态内部类单例模式" class="headerlink" title="静态内部类单例模式"></a>静态内部类单例模式</h2><pre><code>public class Singleton implements  Serializable{
+    private Singleton(){}
+
+    public static Singleton getInstance(){
+        return SingletonHolder.sInstance;
+    }
+    /**
+     * 静态内部类
+     */
+    private static class SingletonHolder{
+        private static final Singleton sInstance=new Singleton();
+    }
+
+    /**
+     * 为了杜绝对象在反序列化时重新生成对象，则重写Serializable的私有方法
+     * @return
+     * @throws ObjectStreamException
+     */
+    private Object readResolve() throws ObjectStreamException{
+        return SingletonHolder.sInstance;
+    }
+
+}
+</code></pre><p>这种是推荐使用的单例模式实现方式。当第一次加载Singleton类时并不会初始化INSTANCE，只有在第一次调用getInstance方法时才会导致INSTANCE被初始化。这种方式不仅能够保证线程安全，也能保证单例对象的唯一性，同时也延长了单例的实例化。<br>上面的代码重写了 readResolve() 方法，这是因为通过序列化可以将一个单例的实例对象写到磁盘，然后读回来，从而获得一个实例。即使构造函数是私有的，反序列化时依然可以通过特殊的途径去创建类的一个新的实例，相当于调用该类的构造函数。反序列化操作提供了一个特别的钩子函数，类中具有一个私有的、被实例化的方法 readResolve()，这个方法可以让开发人员控制对象的反序列化。重写该方法返回 SingletonHolder.sInstance ，而不是默认的生成新的实例，从而保持单例。</p>
+<h2 id="枚举单例"><a href="#枚举单例" class="headerlink" title="枚举单例"></a>枚举单例</h2><pre><code>public enum SingletonEnum {
+    INSTANCE;
+    public void doSomething(){
+        System.out.println(&quot;do sth.&quot;);
+    }
+}
+</code></pre><p>这种方式是Effective Java作者Josh Bloch 提倡的方式，它不仅能避免多线程同步问题，而且还能防止反序列化重新创建新的对象。</p>
+<h2 id="容器实现单例"><a href="#容器实现单例" class="headerlink" title="容器实现单例"></a>容器实现单例</h2><pre><code>public class SingletonManager {
+    private static Map&lt;String,Object&gt; objMap=new HashMap&lt;String,Object&gt;();
+
+    private SingletonManager(){};
+
+    public static void registerService(String key,Object instance){
+        if(!objMap.containsKey(key)){
+            objMap.put(key, instance);
+        }
+    }
+
+    public static Object getService(String key){
+        return objMap.get(key);
+    }
+}
+</code></pre><p>将多种单例类型注入到一个统一的管理类中，在使用时根据key获取对象对应类型的对象。这种方式使得我们可以管理多种类型的单例，并且在使用时可以通过统一的接口进行获取操作，降低了用户的使用成本，也对用户隐藏了具体实现，降低了耦合度。</p>
+<h1 id="单例模式运用场景"><a href="#单例模式运用场景" class="headerlink" title="单例模式运用场景"></a>单例模式运用场景</h1><blockquote>
+<ol>
+<li><p>Windows 的 Task Manager （任务管理器）就是很典型的单例模式（这个很熟悉吧），想想看，是不是呢，你能打开两个 windows task manager 吗？ 不信你自己试试看哦~ </p>
+</li>
+<li><p>windows的Recycle Bin（回收站）也是典型的单例应用。在整个系统运行过程中，回收站一直维护着仅有的一个实例。</p>
+</li>
+<li><p>网站的计数器，一般也是采用单例模式实现，否则难以同步。</p>
+</li>
+<li><p>应用程序的日志应用，一般都何用单例模式实现，这一般是由于共享的日志文件一直处于打开状态，因为只能有一个实例去操作，否则内容不好追加。</p>
+</li>
+<li><p>Web 应用的配置对象的读取，一般也应用单例模式，这个是由于配置文件是共享的资源。</p>
+</li>
+<li><p>数据库连接池的设计一般也是采用单例模式，因为数据库连接是一种数据库资源。数据库软件系统中使用数据库连接池，主要是节省打开或者关闭数据库连接所引起的效率损耗，这种效率上的损耗还是非常昂贵的，因为何用单例模式来维护，就可以大大降低这种损耗。</p>
+</li>
+<li><p>多线程的线程池的设计一般也是采用单例模式，这是由于线程池要方便对池中的线程进行控制。</p>
+</li>
+<li><p>操作系统的文件系统，也是大的单例模式实现的具体例子，一个操作系统只能有一个文件系统。</p>
+</li>
+<li><p>HttpApplication 也是单位例的典型应用。熟悉 ASP.Net(IIS) 的整个请求生命周期的人应该知道 HttpApplication 也是单例模式，所有的 HttpModule 都共享一个 HttpApplication 实例.</p>
+</li>
+</ol>
+<p>总结以上，不难看出：</p>
+<p>　　单例模式应用的场景一般发现在以下条件下：</p>
+<p>　　（1）资源共享的情况下，避免由于资源操作时导致的性能或损耗等。如上述中的日志文件，应用配置。</p>
+<p>　　（2）控制资源的情况下，方便资源之间的互相通信。如线程池等。</p>
+</blockquote>
+<h2 id="Android源码中的单例模式"><a href="#Android源码中的单例模式" class="headerlink" title="Android源码中的单例模式"></a>Android源码中的单例模式</h2><p>在 Android 系统中，我们经常会通过 Context 获取系统级别的服务，如 WindowsManagerService、ActivityManagerService 等，更常用的是一个 LayoutInflater 的类，这些服务会在合适的时候以单例的形式注册在系统中，在我们需要的时候就通过 Context 的 getSystemService(String name) 获取。</p>
+<h1 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h1><p>优点：</p>
+<p>1.由于单例模式在内存中只有一个实例，减少了内存开支，特别是一个对象需要频繁的创建、销毁时，而且创建或销毁时性能又无法优化，单例模式的优势就非常明显。 </p>
+<p>2.单例模式可以避免对资源的多重占用，例如一个文件操作，由于只有一个实例存在内存中，避免对同一资源文件的同时操作。 </p>
+<p>3.单例模式可以在系统设置全局的访问点，优化和共享资源访问，例如，可以设计一个单例类，负责所有数据表的映射处理。</p>
+<p>缺点：</p>
+<p>1.单例模式一般没有接口，扩展很困难，若要扩展，只能修改代码来实现。 </p>
+<p>2.单例对象如果持有 Context，那么很容易引发内存泄露。此时需要注意传递给单例对象的 Context 最好是 Application Context。</p>
+<h1 id="参考资料"><a href="#参考资料" class="headerlink" title="参考资料"></a>参考资料</h1><p><a href="http://blog.csdn.net/likika2012/article/details/11483167" title="设计模式之——单例模式(Singleton)的常见应用场景" target="_blank" rel="external">设计模式之——单例模式(Singleton)的常见应用场景</a></p>
+<p>《Android 源码设计模式解析与实战 》</p>
+
+      
+    </div>
+    
+  </div>
+  
+    
+    <div class="copyright">
+        <p><span>本文标题:</span><a href="/2016/09/21/单例模式/">单例模式浅析</a></p>
+        <p><span>文章作者:</span><a href="/" title="访问 Yanjun Xu 的个人博客">Yanjun Xu</a></p>
+        <p><span>发布时间:</span>2016年09月21日 - 18时32分</p>
+        <p><span>最后更新:</span>2016年09月21日 - 19时08分</p>
+        <p>
+            <span>原始链接:</span><a class="post-url" href="/2016/09/21/单例模式/" title="单例模式浅析">http://yoursite.com/2016/09/21/单例模式/</a>
+            <span class="copy-path" data-clipboard-text="原文: http://yoursite.com/2016/09/21/单例模式/　　作者: Yanjun Xu" title="点击复制文章链接"><i class="fa fa-clipboard"></i></span>
+            <script src="/js/clipboard.min.js"></script>
+            <script> var clipboard = new Clipboard('.copy-path'); </script>
+        </p>
+        <p>
+            <span>许可协议:</span><i class="fa fa-creative-commons"></i> <a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/cn/" title="中国大陆 (CC BY-NC-SA 3.0 CN)" target = "_blank">"署名-非商用-相同方式共享 3.0"</a> 转载请保留原文链接及作者。
+        </p>
+    </div>
+
+
+
+<nav id="article-nav">
+  
+  
+    <a href="/2016/09/21/hello-world/" id="article-nav-older" class="article-nav-link-wrap">
+      <div class="article-nav-title">Hello World</div>
+      <strong class="article-nav-caption">></strong>
+    </a>
+  
+</nav>
+
+  
+</article>
+
+    <div id="toc" class="toc-article">
+    <strong class="toc-title">文章目录</strong>
+    <ol class="toc"><li class="toc-item toc-level-1"><a class="toc-link" href="#简介"><span class="toc-number">1.</span> <span class="toc-text">简介</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#单例模式介绍"><span class="toc-number">2.</span> <span class="toc-text">单例模式介绍</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#单例模式使用要点"><span class="toc-number">3.</span> <span class="toc-text">单例模式使用要点</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#单例模式用法"><span class="toc-number">4.</span> <span class="toc-text">单例模式用法</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#饿汉模式"><span class="toc-number">4.1.</span> <span class="toc-text">饿汉模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#懒汉模式"><span class="toc-number">4.2.</span> <span class="toc-text">懒汉模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#双重检查锁定（Double-Check-Lock）实现单例"><span class="toc-number">4.3.</span> <span class="toc-text">双重检查锁定（Double Check Lock）实现单例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#静态内部类单例模式"><span class="toc-number">4.4.</span> <span class="toc-text">静态内部类单例模式</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#枚举单例"><span class="toc-number">4.5.</span> <span class="toc-text">枚举单例</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#容器实现单例"><span class="toc-number">4.6.</span> <span class="toc-text">容器实现单例</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#单例模式运用场景"><span class="toc-number">5.</span> <span class="toc-text">单例模式运用场景</span></a><ol class="toc-child"><li class="toc-item toc-level-2"><a class="toc-link" href="#Android源码中的单例模式"><span class="toc-number">5.1.</span> <span class="toc-text">Android源码中的单例模式</span></a></li></ol></li><li class="toc-item toc-level-1"><a class="toc-link" href="#总结"><span class="toc-number">6.</span> <span class="toc-text">总结</span></a></li><li class="toc-item toc-level-1"><a class="toc-link" href="#参考资料"><span class="toc-number">7.</span> <span class="toc-text">参考资料</span></a></li></ol>
+</div>
+<input type="button" id="tocButton" value="隐藏目录"  title="点击按钮隐藏或者显示文章目录">
+
+<script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script>
+    var valueHide = "隐藏目录";
+    var valueShow = "显示目录";
+
+    if ($(".left-col").is(":hidden")) {
+        $("#tocButton").attr("value", valueShow);
+    }
+    $("#tocButton").click(function() {
+        if ($("#toc").is(":hidden")) {
+            $("#tocButton").attr("value", valueHide);
+            $("#toc").slideDown(320);
+        }
+        else {
+            $("#tocButton").attr("value", valueShow);
+            $("#toc").slideUp(350);
+        }
+    })
+    if ($(".toc").length < 1) {
+        $("#toc, #tocButton").hide();
+    }
+</script>
+
+
+
+
+
+<div class="bdsharebuttonbox">
+	<a href="#" class="fx fa-weibo bds_tsina" data-cmd="tsina" title="分享到新浪微博"></a>
+	<a href="#" class="fx fa-weixin bds_weixin" data-cmd="weixin" title="分享到微信"></a>
+	<a href="#" class="fx fa-qq bds_sqq" data-cmd="sqq" title="分享到QQ好友"></a>
+	<a href="#" class="fx fa-facebook-official bds_fbook" data-cmd="fbook" title="分享到Facebook"></a>
+	<a href="#" class="fx fa-twitter bds_twi" data-cmd="twi" title="分享到Twitter"></a>
+	<a href="#" class="fx fa-linkedin bds_linkedin" data-cmd="linkedin" title="分享到linkedin"></a>
+	<a href="#" class="fx fa-files-o bds_copy" data-cmd="copy" title="分享到复制网址"></a>
+</div>
+<script>window._bd_share_config={"common":{"bdSnsKey":{},"bdText":"","bdMini":"2","bdMiniList":false,"bdPic":"","bdStyle":"2","bdSize":"24"},"share":{}};with(document)0[(getElementsByTagName('head')[0]||body).appendChild(createElement('script')).src='http://bdimg.share.baidu.com/static/api/js/share.js?v=89860593.js?cdnversion='+~(-new Date()/36e5)];</script>
+
+
+
+
+    
+      <div class="duoshuo" id="comments">
+    <!-- 多说评论框 start -->
+    <div class="ds-thread" data-thread-key="2016/09/21/单例模式/" data-title="单例模式浅析" data-url="http://yoursite.com/2016/09/21/单例模式/"></div>
+    <!-- 多说评论框 end -->
+    <!-- 多说公共JS代码 start (一个网页只需插入一次) -->
+    <script type="text/javascript">
+    var duoshuoQuery = {short_name:"null"};
+    (function() {
+        var ds = document.createElement('script');
+        ds.type = 'text/javascript';ds.async = true;
+        ds.src = '/js/embed.js';
+        ds.charset = 'UTF-8';
+        (document.getElementsByTagName('head')[0] 
+         || document.getElementsByTagName('body')[0]).appendChild(ds);
+    })();
+    </script>
+    <!-- 多说公共JS代码 end -->
+</div>
+
+    
+
+
+
+    <div class="scroll" id="post-nav-button">
+        
+            <a href="/" title="回到主页"><i class="fa fa-home"></i></a>
+        
+        <a title="文章列表"><i class="fa fa-bars"></i><i class="fa fa-times"></i></a>
+        
+            <a href="/2016/09/21/hello-world/" title="下一篇: Hello World">
+                <i class="fa fa-angle-right"></i>
+            </a>
+        
+    </div>
+    <ul class="post-list"><li class="post-list-item"><a class="post-list-link" href="/2016/09/21/单例模式/">单例模式浅析</a></li><li class="post-list-item"><a class="post-list-link" href="/2016/09/21/hello-world/">Hello World</a></li></ul>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+    <script>
+        $(".post-list").addClass("toc-article");
+        $(".post-list-item a").attr("target","_blank");
+        $("#post-nav-button > a:nth-child(2)").click(function() {
+            $(".fa-bars, .fa-times").toggle();
+            $(".post-list").toggle(300);
+            if ($(".toc").length > 0) {
+                $("#toc, #tocButton").toggle(200, function() {
+                    if ($(".switch-area").is(":visible")) {
+                        $("#tocButton").attr("value", valueHide);
+                        }
+                    })
+            }
+            else {
+            }
+        })
+    </script>
+
+
+
+    <script>
+        
+    </script>
+</div>
+      <footer id="footer">
+    <div class="outer">
+        <div id="footer-info">
+            <div class="footer-left">
+                &copy; 2016 Yanjun Xu
+            </div>
+            <div class="footer-right">
+                <a href="http://hexo.io/" target="_blank">Hexo</a>  Theme <a href="https://github.com/luuman/hexo-theme-spfk" target="_blank">spfk</a> by luuman
+            </div>
+        </div>
+        
+            <div class="visit">
+                
+                    <span id="busuanzi_container_site_pv" style='display:none'>
+                        <span id="site-visit" >总计到访数: 
+                            <span id="busuanzi_value_site_uv"></span>
+                        </span>
+                    </span>
+                
+                
+                    <span>, </span>
+                
+                
+                    <span id="busuanzi_container_page_pv" style='display:none'>
+                        <span id="page-visit">本页阅读量: 
+                            <span id="busuanzi_value_page_pv"></span>
+                        </span>
+                    </span>
+                
+            </div>
+        
+    </div>
+</footer>
+
+    </div>
+    <script src="https://7.url.cn/edu/jslib/comb/require-2.1.6,jquery-1.9.1.min.js"></script>
+<script src="/js/main.js"></script>
+
+    <script>
+        $(document).ready(function() {
+            var backgroundnum = 24;
+            var backgroundimg = "url(/background/bg-x.jpg)".replace(/x/gi, Math.ceil(Math.random() * backgroundnum));
+            $("#mobile-nav").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+            $(".left-col").css({"background-image": backgroundimg,"background-size": "cover","background-position": "center"});
+        })
+    </script>
+
+
+
+
+
+<div class="scroll" id="scroll">
+    <a href="#"><i class="fa fa-arrow-up"></i></a>
+    <a href="#comments"><i class="fa fa-comments-o"></i></a>
+    <a href="#footer"><i class="fa fa-arrow-down"></i></a>
+</div>
+<script>
+    $(document).ready(function() {
+        if ($("#comments").length < 1) {
+            $("#scroll > a:nth-child(2)").hide();
+        };
+    })
+</script>
+
+<script async src="https://dn-lbstatics.qbox.me/busuanzi/2.3/busuanzi.pure.mini.js">
+</script>
+
+  <script language="javascript">
+    $(function() {
+        $("a[title]").each(function() {
+            var a = $(this);
+            var title = a.attr('title');
+            if (title == undefined || title == "") return;
+            a.data('title', title).removeAttr('title').hover(
+
+            function() {
+                var offset = a.offset();
+                $("<div id=\"anchortitlecontainer\"></div>").appendTo($("body")).html(title).css({
+                    top: offset.top - a.outerHeight() - 15,
+                    left: offset.left + a.outerWidth()/2 + 1
+                }).fadeIn(function() {
+                    var pop = $(this);
+                    setTimeout(function() {
+                        pop.remove();
+                    }, pop.text().length * 800);
+                });
+            }, function() {
+                $("#anchortitlecontainer").remove();
+            });
+        });
+    });
+</script>
+
+
+  </div>
+</body>
+</html>
